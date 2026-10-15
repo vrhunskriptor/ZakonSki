@@ -1,0 +1,641 @@
+<!doctype html>
+<html lang="sr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta property="og:title" content="ZakonSki instruktori 2026">
+<meta property="og:description" content="Dodirni oblak i izaberi svog instruktora.">
+<title>ZakonSki instruktori 2026</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bungee&family=Nunito:wght@800;900&display=swap">
+<style>
+/* Layout: tri SVG scene preko celog ekrana (planina -> kućica -> staza), sneg na canvas-u iznad, dugmad i tekst kao HTML slojevi. Jedan "retro ski poster" izgled, namerno. */
+:root{
+  --sky-top:#16457F;
+  --sky-mid:#4F93D2;
+  --sky-low:#BFE0F7;
+  --snow:#F7FBFF;
+  --rock:#35587C;
+  --rock-far:#7096BC;
+  --pine:#1E5A4C;
+  --red:#E63946;
+  --gold:#FFC93C;
+  --teal:#2A9D8F;
+  --ink:#14213D;
+  --title:'Bungee','Arial Black',Impact,sans-serif;
+  --body:'Nunito','Arial Rounded MT Bold',system-ui,sans-serif;
+  color-scheme:light;
+}
+[hidden]{display:none!important}
+html,body{height:100%}
+body{
+  margin:0;overflow:hidden;
+  background:linear-gradient(var(--sky-top),var(--sky-mid) 55%,var(--sky-low));
+  color:var(--snow);font-family:var(--body);
+  -webkit-tap-highlight-color:transparent;
+}
+.scene{position:fixed;inset:0;width:100%;height:100%;display:block;animation:fade .6s ease-out}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+#snow{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:5}
+
+/* oblak */
+#cloud{cursor:pointer;outline:none}
+#cloud .puff{animation:float 3.2s ease-in-out infinite;transform-box:fill-box;transform-origin:center}
+#cloud circle,#cloud rect{fill:var(--snow);transition:fill .6s}
+#cloud.raining circle,#cloud.raining rect{fill:#D9E4EF}
+#cloud.raining .puff{animation:shiver .18s linear infinite}
+#cloud:focus-visible .puff{stroke:var(--gold);stroke-width:3}
+#cloud .ring{fill:none;stroke:var(--snow);stroke-width:2;opacity:0;transform-box:fill-box;transform-origin:center;animation:ring 2s ease-out infinite}
+#cloud.raining .ring{display:none}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+@keyframes shiver{0%,100%{transform:translateX(0)}50%{transform:translateX(2px)}}
+@keyframes ring{0%{opacity:.7;transform:scale(.8)}100%{opacity:0;transform:scale(1.35)}}
+
+/* sneg na vrhovima */
+.cap{fill:var(--snow);opacity:0;transform:translateY(-10px);transition:opacity 1.6s ease-out,transform 1.6s ease-out}
+.snowy .cap{opacity:1;transform:none}
+
+/* žičara i likovi */
+#lift{opacity:0;transition:opacity .8s}
+#lift.on{opacity:1}
+.cable{stroke:var(--ink);stroke-width:1.6}
+.tower{stroke:var(--ink);stroke-width:3;stroke-linecap:round}
+.hut{fill:var(--red);stroke:var(--ink);stroke-width:2}
+.roof{fill:var(--snow);stroke:var(--ink);stroke-width:2;stroke-linejoin:round}
+.chairline{stroke:var(--ink);stroke-width:2.4;stroke-linecap:round;fill:none}
+.limb{stroke-linecap:round;stroke-linejoin:round;fill:none}
+.jacket{stroke:var(--teal);stroke-width:7}
+.pants{stroke:var(--ink);stroke-width:5.5}
+.ski{stroke:var(--gold);stroke-width:3;stroke-linecap:round;fill:none}
+.pole{stroke:var(--ink);stroke-width:1.4;stroke-linecap:round}
+.helmet{fill:var(--gold);stroke:var(--ink);stroke-width:1.5}
+.face{fill:#F2C7A5}
+.tiny{fill:none;stroke:var(--ink);stroke-width:1;stroke-linecap:round}
+
+/* oblačići za govor */
+.bub{animation:bub .28s cubic-bezier(.3,1.7,.5,1) both;transform-box:fill-box;transform-origin:50% 100%}
+.bub rect,.bub path{fill:var(--snow);stroke:var(--ink);stroke-width:2;stroke-linejoin:round}
+.bub line{stroke:var(--snow);stroke-width:3}
+.bub text{font-family:var(--body);font-weight:900;font-size:12.5px;fill:var(--ink);text-anchor:middle}
+@keyframes bub{from{transform:scale(.3);opacity:0}to{transform:none;opacity:1}}
+
+/* efekti */
+.pop{animation:popin .4s cubic-bezier(.3,1.8,.5,1) both;transform-box:fill-box;transform-origin:center}
+@keyframes popin{from{transform:scale(0) rotate(-20deg)}to{transform:none}}
+.spin{animation:spin 1.2s linear infinite;transform-box:fill-box;transform-origin:center}
+@keyframes spin{to{transform:rotate(360deg)}}
+.shake{animation:shake .5s ease-out;transform-box:fill-box;transform-origin:50% 100%}
+@keyframes shake{20%{transform:rotate(-7deg)}45%{transform:rotate(5deg)}70%{transform:rotate(-3deg)}100%{transform:none}}
+.cig{fill:#D9DDE3;animation:cig 2s ease-out infinite;transform-box:fill-box;transform-origin:center}
+.cig:nth-of-type(2){animation-delay:1s}
+@keyframes cig{from{opacity:.9;transform:translate(0,0) scale(.6)}to{opacity:0;transform:translate(6px,-14px) scale(1.6)}}
+.l1{fill:var(--red);animation:blink .5s steps(1) infinite}
+.l2{fill:#2F6BFF;animation:blink .5s steps(1) infinite reverse}
+@keyframes blink{50%{fill:var(--snow)}}
+
+/* HTML slojevi */
+.hint{position:fixed;left:0;right:0;bottom:calc(env(safe-area-inset-bottom,0px) + 22px);z-index:6;text-align:center;padding-inline:16px;margin:0;
+  font-weight:900;font-size:1.15rem;color:var(--ink);pointer-events:none}
+.hint span{display:inline-block;background:var(--snow);border:2.5px solid var(--ink);border-radius:999px;padding:8px 18px;box-shadow:3px 3px 0 var(--ink)}
+
+.choices{position:fixed;left:0;right:0;bottom:calc(env(safe-area-inset-bottom,0px) + 18px);z-index:7;display:grid;gap:10px;padding-inline:16px;max-width:420px;margin-inline:auto;animation:fade .4s}
+.choice{font:900 1.15rem var(--body);display:flex;align-items:center;gap:12px;padding:12px 16px;border:2.5px solid var(--ink);border-radius:16px;box-shadow:4px 4px 0 var(--ink);text-align:left;cursor:pointer;color:var(--ink)}
+.choice b{font-family:var(--title);font-weight:400;font-size:1.2rem;flex:none;width:36px;height:36px;display:grid;place-items:center;border-radius:50%;background:var(--ink);color:var(--snow)}
+.choice.good{background:var(--gold)}
+.choice.bad{background:#C9CED6}
+.choice:active{transform:translate(2px,2px);box-shadow:2px 2px 0 var(--ink)}
+.choice:focus-visible,.btn:focus-visible{outline:3px dashed var(--snow);outline-offset:4px}
+
+.panel{position:fixed;inset:0;z-index:8;display:grid;place-items:center;padding-inline:16px;background:rgba(20,33,61,.55);animation:fade .3s}
+.sheet{width:100%;max-width:380px;background:var(--snow);color:var(--ink);border:3px solid var(--ink);border-radius:20px;box-shadow:6px 6px 0 var(--ink);padding:22px 18px;display:grid;gap:10px;box-sizing:border-box}
+.sheet-eyebrow{margin:0;font-weight:900;font-size:.75rem;letter-spacing:.14em;text-transform:uppercase;color:var(--red)}
+.sheet h2{margin:0;font-family:var(--title);font-weight:400;font-size:1.5rem;line-height:1.05;text-wrap:balance}
+.sheet-sub{margin:0 0 4px;font-weight:800;opacity:.7}
+.check{position:relative;display:grid;grid-template-columns:26px 1fr;gap:12px;align-items:center;font-weight:900;font-size:1.02rem;line-height:1.2;cursor:pointer;padding:11px 12px;border:2px solid var(--ink);border-radius:12px;background:#fff;transition:background .2s}
+.check input{position:absolute;opacity:0;width:1px;height:1px;margin:0}
+.check .box{width:24px;height:24px;border:2.5px solid var(--ink);border-radius:6px;display:grid;place-items:center;background:#fff;box-sizing:border-box;color:#fff;font-weight:900;font-size:.95rem}
+.check input:checked + .box{background:var(--red)}
+.check input:checked + .box::after{content:"✓"}
+.check:has(input:checked){background:#FFF2CC}
+.check input:focus-visible + .box{outline:3px solid var(--gold);outline-offset:2px}
+.sheet-ok{margin:0;min-height:1.3em;font-weight:900;color:#1E7A4C}
+
+.end{position:fixed;left:0;right:0;top:calc(env(safe-area-inset-top,0px) + 5vh);z-index:6;padding-inline:16px;display:grid;gap:14px;justify-items:center;text-align:center}
+.end-msg{margin:0;max-width:340px;background:var(--snow);color:var(--ink);font-weight:900;font-size:1.05rem;line-height:1.3;border:2.5px solid var(--ink);border-radius:14px;padding:10px 14px;box-shadow:3px 3px 0 var(--ink);animation:fade .4s}
+.title{margin:0;font-family:var(--title);font-weight:400;line-height:.95;letter-spacing:.02em;color:var(--snow);
+  text-shadow:4px 4px 0 var(--red),8px 8px 0 var(--ink)}
+.title .l1t{display:block;font-size:clamp(1.9rem,10vw,3.8rem)}
+.title .hl{color:var(--gold)}
+.title .l2t{display:block;font-size:clamp(3.2rem,20vw,7.5rem);color:var(--gold);margin-top:.12em}
+.title .ch{display:inline-block;animation:drop .6s cubic-bezier(.25,1.7,.5,1) backwards}
+@keyframes drop{from{transform:translateY(-60px) scale(.4);opacity:0}to{transform:none;opacity:1}}
+.end-btns{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+.btn{font:900 1rem var(--body);color:var(--ink);background:var(--gold);border:2.5px solid var(--ink);border-radius:999px;padding:9px 18px;box-shadow:3px 3px 0 var(--ink);cursor:pointer}
+.btn.alt{background:var(--snow)}
+.btn:active{transform:translate(2px,2px);box-shadow:1px 1px 0 var(--ink)}
+
+@media (prefers-reduced-motion:reduce){
+  #cloud .puff,#cloud .ring,.title .ch,.bub,.pop,.spin,.shake,.cig,.l1,.l2,.scene{animation:none}
+}
+</style>
+
+</head>
+<body>
+<!-- ===================== SCENA A: planina, oblak, žičara ===================== -->
+<svg class="scene" id="sceneA" viewBox="0 0 360 640" preserveAspectRatio="xMidYMax meet" aria-label="Planina sa oblakom">
+  <polygon style="fill:var(--rock-far)" points="-400,470 0,430 90,300 150,360 300,250 420,380 760,420 760,700 -400,700"/>
+  <polygon class="cap" points="90,300 72,326 80,322 88,332 96,322 106,316"/>
+  <polygon class="cap" points="300,250 270,272 280,268 290,278 302,268 314,276 322,274"/>
+  <polygon style="fill:var(--rock)" points="-60,640 70,420 120,450 200,210 270,330 300,312 420,640"/>
+  <polygon fill="#2A4766" points="200,210 236,272 222,300 250,360 300,312 420,640 260,640 230,420"/>
+  <polygon class="cap" points="200,210 176,282 186,276 194,290 204,274 214,288 226,272 236,272"/>
+  <path style="fill:var(--snow)" d="M-400 560 Q 0 545 180 568 T 760 556 V 700 H -400 Z"/>
+  <g style="fill:var(--pine)">
+    <polygon points="262,566 276,520 290,566"/><rect x="273" y="564" width="6" height="8" fill="#5B3A29"/>
+    <polygon points="292,572 310,512 328,572"/><rect x="307" y="570" width="6" height="8" fill="#5B3A29"/>
+    <polygon points="330,566 342,530 354,566"/><rect x="339" y="564" width="6" height="8" fill="#5B3A29"/>
+    <polygon points="-10,566 4,528 18,566"/>
+  </g>
+  <g id="lift">
+    <line class="tower" x1="88" y1="413" x2="88" y2="480"/>
+    <line class="tower" x1="80" y1="420" x2="96" y2="406"/>
+    <line class="tower" x1="137" y1="325" x2="137" y2="400"/>
+    <line class="tower" x1="129" y1="332" x2="145" y2="318"/>
+    <line class="cable" x1="40" y1="500" x2="186" y2="236"/>
+    <rect class="hut" x="22" y="498" width="34" height="26"/>
+    <polygon class="roof" points="18,500 39,484 60,500"/>
+    <rect class="hut" x="178" y="236" width="26" height="18"/>
+    <polygon class="roof" points="175,238 191,226 207,238"/>
+    <g id="chair" transform="translate(40 500)">
+      <g id="swing">
+        <rect x="-3" y="-3" width="6" height="5" rx="1" style="fill:var(--ink)"/>
+        <path class="chairline" d="M0 0 V40 M-13 40 H15 M-13 40 V24 M15 40 V30 H4"/>
+        <g id="rider" visibility="hidden">
+          <path class="limb pants" d="M-4 37 H10 L11 50"/>
+          <path class="limb jacket" d="M-4 36 L-6 21"/>
+          <path class="limb jacket" style="stroke-width:4" d="M-5 25 L6 30"/>
+          <circle class="face" cx="-5" cy="14" r="5.5"/>
+          <path class="helmet" d="M-11 14 A6.5 6.5 0 0 1 1.5 13 Z"/>
+          <line class="ski" x1="1" y1="53" x2="27" y2="48"/>
+        </g>
+      </g>
+    </g>
+  </g>
+  <g id="walker" transform="translate(-40 566)" visibility="hidden"></g>
+  <g id="cloud" role="button" tabindex="0" aria-label="Dodirni oblak">
+    <ellipse class="ring" cx="205" cy="112" rx="70" ry="40"/>
+    <g class="puff">
+      <rect x="150" y="112" width="112" height="28" rx="14"/>
+      <circle cx="172" cy="116" r="22"/>
+      <circle cx="200" cy="100" r="30"/>
+      <circle cx="232" cy="110" r="24"/>
+      <circle cx="252" cy="124" r="16"/>
+    </g>
+  </g>
+</svg>
+
+<!-- ===================== SCENA B: kućica na vrhu ===================== -->
+<svg class="scene" id="sceneB" viewBox="0 0 360 640" preserveAspectRatio="xMidYMax meet" aria-label="Kućica ski škole" hidden>
+  <polygon style="fill:var(--rock-far)" points="-400,430 30,390 110,330 190,375 290,318 760,405 760,700 -400,700"/>
+  <polygon style="fill:var(--snow)" points="110,330 92,346 104,343 114,352 124,342 134,346"/>
+  <polygon style="fill:var(--snow)" points="290,318 268,334 280,331 292,340 304,331 316,334"/>
+  <path style="fill:var(--snow)" d="M-400 470 Q 100 455 360 476 T 760 468 V 700 H -400 Z"/>
+  <g>
+    <rect x="150" y="300" width="180" height="182" fill="#8B5A3C" style="stroke:var(--ink)" stroke-width="2.5"/>
+    <path d="M150 324 H330 M150 346 H330 M150 368 H330 M150 390 H330 M150 412 H330 M150 434 H330 M150 456 H330" stroke="#A86F4E" stroke-width="2"/>
+    <polygon style="fill:var(--red);stroke:var(--ink)" stroke-width="2.5" stroke-linejoin="round" points="140,302 340,302 328,284 152,284"/>
+    <path style="fill:var(--snow)" d="M150 286 Q160 276 175 283 Q195 274 215 282 Q240 272 262 282 Q285 274 305 282 Q320 276 330 286 Z"/>
+    <line x1="172" y1="280" x2="172" y2="286" style="stroke:var(--ink)" stroke-width="3"/>
+    <line x1="308" y1="280" x2="308" y2="286" style="stroke:var(--ink)" stroke-width="3"/>
+    <rect x="132" y="228" width="216" height="54" rx="7" style="fill:var(--snow);stroke:var(--ink)" stroke-width="3"/>
+    <text x="240" y="254" text-anchor="middle" style="font-family:var(--title);font-size:15.5px;fill:var(--ink)">BUKING SKI ŠKOLA</text>
+    <text x="240" y="272" text-anchor="middle" style="font-family:var(--body);font-weight:900;font-size:11px;letter-spacing:3px;fill:var(--red)">NA KOPAONIKU</text>
+    <rect x="172" y="328" width="136" height="84" fill="#F6E7C8" style="stroke:var(--ink)" stroke-width="2.5"/>
+    <circle cx="240" cy="358" r="17" fill="#4A2C2A"/>
+    <circle cx="240" cy="338" r="8" fill="#4A2C2A"/>
+    <path d="M214 412 Q215 384 240 380 Q265 384 266 412 Z" fill="#7B4FA0" style="stroke:var(--ink)" stroke-width="1.5"/>
+    <circle class="face" cx="240" cy="363" r="13" style="stroke:var(--ink)" stroke-width="1.2"/>
+    <circle cx="234.5" cy="361" r="4.3" class="tiny"/><circle cx="245.5" cy="361" r="4.3" class="tiny"/>
+    <path class="tiny" d="M238.8 361 H241.2"/>
+    <path d="M235 369 Q240 373 245 369" fill="none" stroke="#C0392B" stroke-width="1.6" stroke-linecap="round"/>
+    <circle cx="227" cy="367" r="1.8" style="fill:var(--gold)"/><circle cx="253" cy="367" r="1.8" style="fill:var(--gold)"/>
+    <rect x="166" y="410" width="148" height="10" fill="#6B4128" style="stroke:var(--ink)" stroke-width="2"/>
+    <rect x="182" y="398" width="30" height="12" rx="2" fill="#2E8B57"/>
+    <text x="197" y="407" text-anchor="middle" style="font-family:var(--body);font-weight:900;font-size:6px;fill:var(--snow)">OTVORENO</text>
+    <line x1="318" y1="482" x2="336" y2="410" style="stroke:var(--gold)" stroke-width="3" stroke-linecap="round"/>
+    <line x1="324" y1="482" x2="342" y2="412" style="stroke:var(--red)" stroke-width="3" stroke-linecap="round"/>
+  </g>
+  <g id="b-skier" transform="translate(-40 478) scale(1.6)"></g>
+  <g id="b-bubbles"></g>
+</svg>
+
+<!-- ===================== SCENA C: staza (oba filmića) ===================== -->
+<svg class="scene" id="sceneC" viewBox="0 0 360 640" preserveAspectRatio="xMidYMax meet" aria-label="Ski staza" hidden>
+  <polygon style="fill:var(--rock-far)" points="-400,330 20,300 120,220 220,290 320,230 760,320 760,700 -400,700"/>
+  <polygon style="fill:var(--snow)" points="120,220 100,238 112,235 122,244 132,234 142,238"/>
+  <polygon style="fill:var(--snow)" points="320,230 296,248 308,245 320,254 332,245 346,250"/>
+  <path style="fill:var(--snow)" d="M-400 330 H100 Q110 330 120 337 L760 788 V800 H-400 Z"/>
+  <path d="M100 330 Q110 330 120 337 L420 548" fill="none" stroke="#C9DCEE" stroke-width="3"/>
+  <g style="fill:var(--pine)">
+    <polygon points="-6,332 8,290 22,332"/>
+    <polygon points="40,332 52,300 64,332"/>
+    <polygon points="196,398 210,352 224,398" opacity=".9"/>
+    <polygon points="336,512 350,470 364,512"/>
+  </g>
+  <g id="crash-tree">
+    <rect x="285" y="448" width="6" height="12" fill="#5B3A29"/>
+    <polygon style="fill:var(--pine)" points="268,454 288,388 308,454"/>
+    <polygon style="fill:var(--snow)" points="281,410 288,388 295,410 290,406 286,410"/>
+  </g>
+  <path fill="#EAF3FB" d="M-400 556 Q 180 542 760 558 V800 H-400 Z"/>
+  <g id="c-caci"></g>
+  <g id="c-inst"></g>
+  <g id="c-stud"></g>
+  <g id="amb" visibility="hidden">
+    <rect x="-50" y="-36" width="72" height="32" rx="3" fill="#fff" style="stroke:var(--ink)" stroke-width="2"/>
+    <path d="M-50 -26 H-64 Q-69 -26 -70 -20 L-72 -9 V-4 H-50 Z" fill="#fff" style="stroke:var(--ink)" stroke-width="2" stroke-linejoin="round"/>
+    <path d="M-52 -24 H-63 L-66 -16 H-52 Z" style="fill:var(--sky-low);stroke:var(--ink)" stroke-width="1.4"/>
+    <rect x="-72" y="-13" width="94" height="4" style="fill:var(--red)"/>
+    <rect x="5" y="-31" width="4" height="13" style="fill:var(--red)"/><rect x="0.5" y="-26.5" width="13" height="4" style="fill:var(--red)"/>
+    <text x="-22" y="-24" text-anchor="middle" style="font-family:var(--body);font-weight:900;font-size:6.5px;fill:var(--red)">HITNA</text>
+    <text x="-22" y="-16.5" text-anchor="middle" style="font-family:var(--body);font-weight:900;font-size:6.5px;fill:var(--red)">POMOĆ</text>
+    <rect class="l1" x="-46" y="-41" width="7" height="5" rx="1"/>
+    <rect class="l2" x="-37" y="-41" width="7" height="5" rx="1"/>
+    <circle cx="-56" cy="-3" r="6" style="fill:var(--ink)"/><circle cx="-56" cy="-3" r="2.2" fill="#ccc"/>
+    <circle cx="8" cy="-3" r="6" style="fill:var(--ink)"/><circle cx="8" cy="-3" r="2.2" fill="#ccc"/>
+  </g>
+  <g id="c-fx"></g>
+  <g id="c-bubbles"></g>
+</svg>
+
+<canvas id="snow" aria-hidden="true"></canvas>
+
+<p class="hint" id="hint" aria-live="polite"><span id="hint-text">Dodirni oblak</span></p>
+
+<div class="choices" id="choices" hidden>
+  <button class="choice good" id="opt1"><b>1</b>Ski instruktor</button>
+  <button class="choice bad" id="opt2"><b>2</b>Ćaci instruktor</button>
+</div>
+
+<div class="panel" id="panel" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="sheet-h">
+    <p class="sheet-eyebrow">Opcija 1 · Ski instruktor</p>
+    <h2 id="sheet-h">Ski instruktori ujedinjeni</h2>
+    <p class="sheet-sub">Štikliraj sve da počne čas.</p>
+    <label class="check"><input type="checkbox" id="k1"><span class="box"></span>Nema drukara</label>
+    <label class="check"><input type="checkbox" id="k2"><span class="box"></span>Nema kukavica</label>
+    <label class="check"><input type="checkbox" id="k3"><span class="box"></span>Spremni na zakonit rad, ali i na zakonske obaveze</label>
+    <label class="check"><input type="checkbox" id="k4"><span class="box"></span>Spremni na realnu overu licence</label>
+    <p class="sheet-ok" id="sheet-ok" aria-live="polite"></p>
+  </div>
+</div>
+
+<div class="end" id="end" hidden>
+  <p class="end-msg" id="end-msg" hidden></p>
+  <h1 class="title" id="title" aria-label="ZakonSki instruktori 2026"><span class="l1t" data-hl="5">ZAKONSKI</span><span class="l1t">INSTRUKTORI</span><span class="l2t">2026</span></h1>
+  <div class="end-btns">
+    <button class="btn" id="to-choice">Nazad na izbor</button>
+    <button class="btn alt" id="restart">Ispočetka ↺</button>
+  </div>
+</div>
+
+<script>
+(() => {
+  const $ = s => document.querySelector(s);
+  const NS = 'http://www.w3.org/2000/svg';
+  const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const T = ms => still ? Math.min(ms, 150) : ms;
+  const wait = ms => new Promise(r => setTimeout(r, T(ms)));
+  const ease = e => e < .5 ? 2 * e * e : 1 - Math.pow(-2 * e + 2, 2) / 2;
+  const easeOut = p => 1 - Math.pow(1 - p, 2);
+  const tween = (ms, fn, ez = ease) => new Promise(done => {
+    const d = T(ms), s = performance.now();
+    const f = now => { const p = Math.min(1, (now - s) / d); fn(ez(p)); p < 1 ? requestAnimationFrame(f) : done(); };
+    requestAnimationFrame(f);
+  });
+  const say = t => { $('#hint').hidden = !t; $('#hint-text').textContent = t; };
+  let run = 0; // svaki novi tok poveća broj; stari tok se tiho prekine
+  const alive = id => id === run;
+
+  /* ---------- sneg ---------- */
+  const cv = $('#snow'), cx = cv.getContext('2d');
+  let flakes = [], heavy = false, light = false, loop = false;
+  const size = () => { const d = devicePixelRatio || 1; cv.width = innerWidth * d; cv.height = innerHeight * d; cx.setTransform(d, 0, 0, d, 0, 0); };
+  size(); addEventListener('resize', size);
+  const flake = (x, y) => ({ x, y, r: 1.2 + Math.random() * 2.6, vy: .6 + Math.random() * 1.4, ph: Math.random() * 6.3, sw: .3 + Math.random() * .8 });
+  function frame() {
+    cx.clearRect(0, 0, innerWidth, innerHeight);
+    if (heavy) {
+      const r = $('#cloud .puff').getBoundingClientRect();
+      for (let i = 0; i < 3; i++) { const f = flake(r.left - r.width * .25 + Math.random() * r.width * 1.5, r.top + r.height * .8); f.vy += 1; flakes.push(f); }
+    }
+    if (light && Math.random() < .3) flakes.push(flake(Math.random() * innerWidth, -6));
+    cx.fillStyle = '#F7FBFF';
+    flakes = flakes.filter(f => f.y < innerHeight + 6);
+    for (const f of flakes) {
+      f.y += f.vy; f.ph += .03; f.x += Math.sin(f.ph) * f.sw;
+      cx.beginPath(); cx.arc(f.x, f.y, f.r, 0, 6.283); cx.fill();
+    }
+    if (flakes.length || heavy || light) requestAnimationFrame(frame); else loop = false;
+  }
+  const startSnow = () => { if (!loop && !still) { loop = true; requestAnimationFrame(frame); } };
+
+  /* ---------- likovi ---------- */
+  // skijaš: stopala u (0,0), gleda desno; .skis i .body se rotiraju odvojeno
+  const skier = (jacket, helmet, extra = '') => `
+    <g class="skis"><path class="ski" d="M-16 0 H18 Q22 0 22 -4"/></g>
+    <g class="body">
+      <line class="pole" x1="12" y1="-27" x2="17" y2="-2"/>
+      <path class="limb pants" d="M2 -2 L5 -13 L0 -23"/>
+      <path class="limb" style="stroke:${jacket};stroke-width:7" d="M0 -23 L4 -40"/>
+      <path class="limb" style="stroke:${jacket};stroke-width:4" d="M3 -36 L12 -27"/>
+      <circle class="face" cx="6" cy="-46" r="5.5"/>
+      <path class="helmet" style="fill:${helmet}" d="M0 -46 A6.5 6.5 0 0 1 12.5 -47 Z"/>${extra}
+    </g>`;
+  const STUDENT = () => skier('var(--teal)', 'var(--gold)');
+  const INSTRUCTOR = skier('var(--red)', 'var(--snow)',
+    `<rect x="4.5" y="-51.5" width="9" height="3.2" rx="1.6" fill="#14213D"/>
+     <path d="M0.5 -33 H5.5 M3 -35.5 V-30.5" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/>
+     <path class="tiny" d="M8 -43.2 Q10 -41.6 11.6 -43.4"/>`);
+  // karikatura: papuče, trenerka, stomak, kačket naopako, karton sa greškom
+  const CACI = `
+    <g class="body">
+      <ellipse cx="-4" cy="-1.5" rx="6.5" ry="2.6" fill="#2b2b2b"/>
+      <ellipse cx="9" cy="-1.5" rx="6.5" ry="2.6" fill="#2b2b2b"/>
+      <path d="M-3 -3 L-1 -21 M9 -3 L5 -21" stroke="#2E5AAC" stroke-width="6.5" stroke-linecap="round"/>
+      <path d="M-0.8 -4 L1.2 -20 M11 -4 L7.2 -20" stroke="#fff" stroke-width="1" stroke-linecap="round"/>
+      <ellipse cx="3" cy="-31" rx="13.5" ry="12.5" fill="#2E5AAC" style="stroke:var(--ink)" stroke-width="1.3"/>
+      <line x1="3" y1="-43" x2="4" y2="-20" stroke="#fff" stroke-width="1"/>
+      <path d="M-8 -36 L-9 -24" stroke="#2E5AAC" stroke-width="5" stroke-linecap="round"/>
+      <path d="M13 -38 L22 -46" stroke="#2E5AAC" stroke-width="5" stroke-linecap="round"/>
+      <g transform="rotate(-9 38 -64)">
+        <rect x="16" y="-76" width="48" height="21" fill="#C8A26B" style="stroke:var(--ink)" stroke-width="1.2"/>
+        <text x="40" y="-67.5" text-anchor="middle" style="font-family:'Comic Sans MS','Segoe Print',cursive;font-weight:700;font-size:7px;fill:var(--ink)">SKI</text>
+        <text x="40" y="-59.5" text-anchor="middle" style="font-family:'Comic Sans MS','Segoe Print',cursive;font-weight:700;font-size:7px;fill:var(--ink)">INSTRUKTUR</text>
+      </g>
+      <circle class="face" cx="2" cy="-53" r="8.5" style="stroke:var(--ink)" stroke-width="1"/>
+      <g fill="#6b5a50"><circle cx="-3" cy="-48" r=".7"/><circle cx="0" cy="-46.5" r=".7"/><circle cx="3" cy="-46" r=".7"/><circle cx="6" cy="-47" r=".7"/><circle cx="8" cy="-49" r=".7"/><circle cx="-4.5" cy="-50.5" r=".7"/></g>
+      <path d="M-4 -59.5 L9 -59" style="stroke:var(--ink)" stroke-width="2" stroke-linecap="round"/>
+      <rect x="-3.5" y="-57" width="5.5" height="3.5" rx="1" style="fill:var(--ink)"/>
+      <rect x="3.5" y="-57" width="5.5" height="3.5" rx="1" style="fill:var(--ink)"/>
+      <path d="M-0.5 -48.5 Q2.5 -50 5.5 -48.5" class="tiny"/>
+      <rect x="1.6" y="-49.6" width="1.4" height="1.6" fill="#fff"/>
+      <path d="M-7.5 -60 Q2 -70 11 -60 Z" fill="#C0392B" style="stroke:var(--ink)" stroke-width="1"/>
+      <path d="M-7 -60.5 L-16 -58" stroke="#C0392B" stroke-width="3" stroke-linecap="round"/>
+      <line x1="5.5" y1="-48.5" x2="13" y2="-47" stroke="#fff" stroke-width="2"/>
+      <circle cx="13.5" cy="-47" r="1.2" fill="#FF7A1A"/>
+      <circle class="cig" cx="15" cy="-50" r="2"/><circle class="cig" cx="15" cy="-50" r="2"/>
+    </g>`;
+
+  // staza: g(x) = visina tla, ang(x) = nagib u stepenima
+  const g = x => x <= 100 ? 330 : x < 120 ? 330 + ((x - 100) ** 2) / 40 * .704 : 337.04 + (x - 120) * .704;
+  const ang = x => x <= 100 ? 0 : Math.atan(Math.min(1, (x - 100) / 20) * .704) * 180 / Math.PI;
+  function place(el, x, o = {}) {
+    const s = o.s || 1.4, a = ang(x);
+    el.setAttribute('transform', `translate(${x} ${g(x) + (o.dy || 0)}) scale(${s})`);
+    const sk = el.querySelector('.skis'), b = el.querySelector('.body');
+    if (sk && !o.keepSkis) sk.setAttribute('transform', `rotate(${a})`);
+    if (b) b.setAttribute('transform', `rotate(${a * .35 + (o.ba || 0)})${o.crouch ? ' translate(0 2.5) scale(1 .9)' : ''}`);
+  }
+
+  // oblačić za govor
+  function bubble(layer, cxp, top, lines, tx, ty) {
+    layer.replaceChildren();
+    const w = Math.max(...lines.map(l => l.length)) * 6.9 + 26, h = lines.length * 16 + 14;
+    const c = Math.min(354 - w / 2, Math.max(6 + w / 2, cxp)), x = c - w / 2;
+    const bx = Math.min(x + w - 16, Math.max(x + 16, tx));
+    const el = document.createElementNS(NS, 'g');
+    el.setAttribute('class', 'bub');
+    el.innerHTML = `<rect x="${x}" y="${top}" width="${w}" height="${h}" rx="12"/>
+      <path d="M${bx - 7} ${top + h - 1} L${tx} ${ty} L${bx + 7} ${top + h - 1}"/>
+      <line x1="${bx - 5.5}" y1="${top + h - 1.4}" x2="${bx + 5.5}" y2="${top + h - 1.4}"/>` +
+      lines.map((l, i) => `<text x="${c}" y="${top + 23 + i * 16}">${l}</text>`).join('');
+    layer.appendChild(el);
+  }
+  const clear = l => l.replaceChildren();
+
+  /* ---------- scene ---------- */
+  const SCENES = ['sceneA', 'sceneB', 'sceneC'];
+  // SVG nema .hidden svojstvo kao HTML, pa menjamo sam atribut
+  const showScene = id => SCENES.forEach(s => $('#' + s).toggleAttribute('hidden', s !== id));
+  const hideUi = () => { $('#choices').hidden = true; $('#panel').hidden = true; $('#end').hidden = true; say(''); };
+
+  const A = { x: 40, y: 500 }, B = { x: 186, y: 236 };
+  const chair = $('#chair'), swing = $('#swing'), rider = $('#rider'), walker = $('#walker');
+  walker.innerHTML = STUDENT();
+  $('#b-skier').innerHTML = STUDENT();
+  $('#c-inst').innerHTML = INSTRUCTOR;
+  $('#c-caci').innerHTML = CACI;
+
+  function resetA() {
+    $('#sceneA').classList.remove('snowy');
+    $('#cloud').classList.remove('raining');
+    $('#lift').classList.remove('on');
+    chair.setAttribute('transform', `translate(${A.x} ${A.y})`);
+    swing.removeAttribute('transform');
+    rider.setAttribute('visibility', 'hidden');
+    walker.setAttribute('visibility', 'hidden');
+    walker.setAttribute('transform', 'translate(-40 566)');
+    heavy = light = false;
+  }
+
+  /* 1. oblak -> sneg -> žičara */
+  async function startA() {
+    const id = ++run;
+    $('#cloud').classList.add('raining');
+    heavy = true; startSnow();
+    say('Pada sneg…');
+    await wait(500); if (!alive(id)) return;
+    $('#sceneA').classList.add('snowy');
+    await wait(1900); if (!alive(id)) return;
+    heavy = false; light = true;
+    $('#lift').classList.add('on');
+    say('Skijaš stiže na žičaru');
+    await wait(700); if (!alive(id)) return;
+    walker.setAttribute('visibility', 'visible');
+    await tween(1500, p => walker.setAttribute('transform', `translate(${-40 + p * 80} 566)`), easeOut);
+    if (!alive(id)) return;
+    walker.setAttribute('visibility', 'hidden');
+    rider.setAttribute('visibility', 'visible');
+    await tween(700, p => swing.setAttribute('transform', `rotate(${Math.sin(p * Math.PI * 3) * 7 * (1 - p)})`), p => p);
+    say('Idemo gore!');
+    await wait(300); if (!alive(id)) return;
+    await tween(4600, p => {
+      const x = A.x + (B.x - A.x) * p, y = A.y + (B.y - A.y) * p;
+      chair.setAttribute('transform', `translate(${x} ${y}) scale(${1 - .3 * p})`);
+      swing.setAttribute('transform', `rotate(${Math.sin(p * 18) * 3})`);
+    });
+    if (!alive(id)) return;
+    await wait(300);
+    kiosk(id);
+  }
+
+  /* 2. kućica na vrhu */
+  async function kiosk(id) {
+    hideUi(); showScene('sceneB');
+    const sk = $('#b-skier'), L = $('#b-bubbles');
+    clear(L);
+    await tween(1600, p => sk.setAttribute('transform', `translate(${-40 + p * 135} 478) scale(1.6)`), easeOut);
+    if (!alive(id)) return;
+    bubble(L, 95, 318, ['Dobar dan! Hteo bih', 'čas skijanja.'], 104, 396);
+    await wait(2000); if (!alive(id)) return;
+    womanAsks();
+  }
+  function womanAsks() {
+    bubble($('#b-bubbles'), 240, 150, ['Imamo dve opcije.', 'Izaberi instruktora:'], 240, 226);
+    $('#choices').hidden = false;
+  }
+  function toChoice() {
+    ++run; hideUi(); showScene('sceneB');
+    $('#b-skier').setAttribute('transform', 'translate(95 478) scale(1.6)');
+    womanAsks();
+  }
+
+  /* opcija 1: spisak za štikliranje */
+  const checks = ['#k1', '#k2', '#k3', '#k4'].map(s => $(s));
+  $('#opt1').addEventListener('click', () => {
+    checks.forEach(c => c.checked = false);
+    $('#sheet-ok').textContent = '';
+    $('#choices').hidden = true;
+    $('#panel').hidden = false;
+    checks[0].focus();
+  });
+  checks.forEach(c => c.addEventListener('change', async () => {
+    if (!checks.every(k => k.checked)) { $('#sheet-ok').textContent = ''; return; }
+    $('#sheet-ok').textContent = 'Svi uslovi ispunjeni ✓ Čas počinje!';
+    const id = ++run;
+    await wait(1000); if (!alive(id)) return;
+    $('#panel').hidden = true;
+    goodLesson(id);
+  }));
+  $('#opt2').addEventListener('click', () => { $('#choices').hidden = true; badLesson(++run); });
+
+  function setupC(who) {
+    hideUi(); showScene('sceneC');
+    clear($('#c-bubbles')); clear($('#c-fx'));
+    $('#amb').setAttribute('visibility', 'hidden');
+    $('#crash-tree').setAttribute('visibility', who === 'bad' ? 'visible' : 'hidden');
+    $('#crash-tree').classList.remove('shake');
+    $('#c-inst').setAttribute('visibility', who === 'good' ? 'visible' : 'hidden');
+    $('#c-caci').setAttribute('visibility', who === 'bad' ? 'visible' : 'hidden');
+    const stu = $('#c-stud'); stu.innerHTML = STUDENT();
+    place(stu, 30);
+    place($('#c-inst'), 82);
+    place($('#c-caci'), 84, { ba: -7 });
+    return stu;
+  }
+
+  /* filmić 1: pravi instruktor */
+  async function goodLesson(id) {
+    const stu = setupC('good'), inst = $('#c-inst'), L = $('#c-bubbles');
+    const lines = [
+      [['Zdravo! Ja sam tvoj', 'licencirani instruktor.'], {}],
+      [['Kolena savijena,', 'težina napred.'], { crouch: 1 }],
+      [['Prati me, polako', 'i kontrolisano!'], { crouch: 1 }]
+    ];
+    for (const [t, pose] of lines) {
+      place(inst, 82, pose); place(stu, 30, pose);
+      bubble(L, 120, 190, t, 92, 252);
+      await wait(2100); if (!alive(id)) return;
+    }
+    clear(L);
+    await tween(5600, p => {
+      const sway = Math.sin(p * Math.PI * 6) * 5;
+      place(inst, 82 + p * 218, { crouch: 1, ba: sway });
+      place(stu, 30 + p * 220, { crouch: 1, ba: sway });
+    });
+    if (!alive(id)) return;
+    place(inst, 300); place(stu, 250);
+    bubble(L, 290, 312, ['Bravo! Skijaš', 'kao profi!'], 306, 386);
+    await wait(1800); if (!alive(id)) return;
+    bubble(L, 220, 278, ['Hvala! Ovo je', 'bilo savršeno.'], 256, 352);
+    await wait(1800); if (!alive(id)) return;
+    clear(L);
+    showEnd('');
+  }
+
+  /* filmić 2: karikatura */
+  async function badLesson(id) {
+    const stu = setupC('bad'), L = $('#c-bubbles'), fx = $('#c-fx');
+    const talk = [
+      [['Šta ima, bre sine.'], 'c'],
+      [['Kočenje je za slabiće.', 'Samo pravo dole!'], 'c'],
+      [['A kako se koči?'], 's'],
+      [['Nema veze. Puštaj se!'], 'c']
+    ];
+    for (const [t, who] of talk) {
+      if (who === 'c') bubble(L, 130, 168, t, 90, 244);
+      else bubble(L, 70, 200, t, 36, 262);
+      await wait(t.length > 1 ? 2300 : 1600); if (!alive(id)) return;
+    }
+    clear(L);
+    let yelled = false;
+    await tween(2700, p => {
+      const x = 30 + p * 236;
+      place(stu, x, { ba: Math.sin(p * 42) * 14 * p });
+      if (p > .4 && !yelled) { yelled = true; bubble(L, x, g(x) - 130, ['AAAAAAA!'], x + 6, g(x) - 72); }
+      if (p > .85 && yelled) clear(L);
+    }, p => p * p);
+    if (!alive(id)) return;
+    clear(L);
+    // sudar
+    $('#crash-tree').classList.add('shake');
+    fx.innerHTML = `
+      <text class="pop" x="300" y="372" text-anchor="middle" transform="rotate(-12 300 372)" style="font-family:var(--title);font-size:26px;fill:var(--red);stroke:var(--ink);stroke-width:1.2;paint-order:stroke">KRC!</text>
+      <g class="spin" style="fill:var(--gold)">
+        <text x="252" y="380" style="font-size:13px">★</text><text x="272" y="364" style="font-size:10px">★</text><text x="246" y="358" style="font-size:9px">★</text>
+      </g>`;
+    const skis = stu.querySelector('.skis');
+    await tween(900, p => {
+      place(stu, 266 + p * 12, { ba: p * 98, dy: p * 5, keepSkis: true });
+      skis.setAttribute('transform', `translate(${p * 28} ${-58 * p + 58 * p * p}) rotate(${35 + p * 430})`);
+    }, p => p);
+    if (!alive(id)) return;
+    await wait(700); if (!alive(id)) return;
+    bubble(L, 130, 168, ['Nije do mene,', 'do skija je.'], 90, 244);
+    await wait(2200); if (!alive(id)) return;
+    clear(L);
+    // hitna pomoć
+    const amb = $('#amb');
+    amb.setAttribute('visibility', 'visible');
+    const siren = document.createElementNS(NS, 'text');
+    siren.setAttribute('class', 'pop');
+    siren.setAttribute('style', 'font-family:var(--title);font-size:13px;fill:var(--red);stroke:var(--snow);stroke-width:3;paint-order:stroke');
+    siren.textContent = 'IUU-IUU!';
+    fx.appendChild(siren);
+    await tween(2300, p => {
+      const x = 440 - p * 210;
+      amb.setAttribute('transform', `translate(${x} 566) scale(1.3)`);
+      siren.setAttribute('x', x - 90); siren.setAttribute('y', 500);
+    }, easeOut);
+    if (!alive(id)) return;
+    await wait(500); if (!alive(id)) return;
+    showEnd('Hitna pomoć je stigla. Sledeći put biraj pametno.');
+  }
+
+  function showEnd(msg) {
+    const m = $('#end-msg'); m.hidden = !msg; m.textContent = msg;
+    let i = 0;
+    $('#title').querySelectorAll('.l1t,.l2t').forEach(line => {
+      const hl = line.dataset.hl === undefined ? Infinity : +line.dataset.hl; // od tog slova nadalje zlatno ("SKI")
+      line.innerHTML = [...line.textContent].map((c, k) => c === ' ' ? ' ' : `<span class="ch${k >= hl ? ' hl' : ''}" aria-hidden="true" style="animation-delay:${(i++) * 70}ms">${c}</span>`).join('');
+    });
+    $('#end').hidden = false;
+  }
+
+  function restart() {
+    ++run; hideUi(); resetA(); showScene('sceneA'); say('Dodirni oblak');
+  }
+
+  const cloud = $('#cloud');
+  const tapCloud = () => { if (!$('#cloud').classList.contains('raining')) startA(); };
+  cloud.addEventListener('click', tapCloud);
+  cloud.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); tapCloud(); } });
+  $('#to-choice').addEventListener('click', toChoice);
+  $('#restart').addEventListener('click', restart);
+})();
+</script>
+
+</body>
+</html>
